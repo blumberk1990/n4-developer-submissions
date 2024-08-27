@@ -5,6 +5,7 @@ import javax.baja.nre.annotations.NiagaraAction;
 import javax.baja.nre.annotations.NiagaraProperty;
 import javax.baja.nre.annotations.NiagaraType;
 import javax.baja.sys.*;
+import javax.baja.util.IFuture;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
@@ -18,14 +19,15 @@ import java.util.zip.Checksum;
         flags = Flags.SUMMARY
 )
 @NiagaraAction(
-        name = "generateChecksum"
+        name = "generateChecksum",
+        flags = Flags.ASYNC
 )
 public class BChecksumService extends BAbstractService
 {
 //region /*+ ------------ BEGIN BAJA AUTO GENERATED CODE ------------ +*/
 //@formatter:off
-/*@ $com.tridiumuniversity.checksumService.BChecksumService(266381127)1.0$ @*/
-/* Generated Tue Aug 27 12:15:01 CEST 2024 by Slot-o-Matic (c) Tridium, Inc. 2012-2024 */
+/*@ $com.tridiumuniversity.checksumService.BChecksumService(753363117)1.0$ @*/
+/* Generated Tue Aug 27 15:07:04 CEST 2024 by Slot-o-Matic (c) Tridium, Inc. 2012-2024 */
 
   //region Property "checksum"
 
@@ -56,7 +58,7 @@ public class BChecksumService extends BAbstractService
    * Slot for the {@code generateChecksum} action.
    * @see #generateChecksum()
    */
-  public static final Action generateChecksum = newAction(0, null);
+  public static final Action generateChecksum = newAction(Flags.ASYNC, null);
 
   /**
    * Invoke the {@code generateChecksum} action.
@@ -85,10 +87,20 @@ public class BChecksumService extends BAbstractService
 
     public void doGenerateChecksum(Context cx)
     {
-        //BJobService.getService().submit(new BChecksumJob(), cx);
         if(getParentComponent().get("enabled").isValue()) {
             setChecksum(calculateCRC(Sys.getStation().getParentComponent()));
         }
+    }
+
+    @Override
+    public IFuture post(Action action, BValue value, Context cx)
+    {
+        if(generateChecksum.equals(action))
+        {
+            Thread thread = new Thread(() -> doGenerateChecksum(cx), "calculateCRCThread");
+            thread.start();
+        }
+        return null;
     }
 
     private long calculateCRC(BComponent component)
